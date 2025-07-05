@@ -1,10 +1,11 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Search, Zap, FileText } from "lucide-react";
+import { ArrowLeft, Search, Zap, FileText, Target } from "lucide-react";
 import PromptChecker from "../components/PromptChecker";
 import ShadowingSimulator from "../components/ShadowingSimulator";
 import ContentMapper from "../components/ContentMapper";
+import AdDuelAnalyzer from "../components/AdDuelAnalyzer";
 
 const Dashboard = () => {
   return (
@@ -54,6 +55,15 @@ const Dashboard = () => {
               <h2 className="text-2xl font-bold">Content Improvement Map</h2>
             </div>
             <ContentMapper />
+          </section>
+
+          {/* Section 4: Ad Duel Analyzer */}
+          <section className="border-2 border-black p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <Target size={24} />
+              <h2 className="text-2xl font-bold">Ad Duel Analyzer</h2>
+            </div>
+            <AdDuelAnalyzer />
           </section>
 
         </div>
