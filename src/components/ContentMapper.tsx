@@ -1,35 +1,34 @@
 
 import { useState } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const ContentMapper = () => {
   const [url, setUrl] = useState("");
   const [result, setResult] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
+    if (!url) return;
+    
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      const mockResult = {
-        schema: {
-          structured: true,
-          breadcrumbs: false,
-          faq: true,
-          article: true
-        },
-        readability: 74,
-        suggestions: [
-          "Add FAQ section to improve Q&A visibility",
-          "Include more specific use case examples",
-          "Optimize headings for better content hierarchy",
-          "Add comparison tables for feature clarity",
-          "Include customer testimonials and case studies"
-        ]
-      };
-      setResult(mockResult);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-suggestions', {
+        body: { url }
+      });
+
+      if (error) throw error;
+      setResult(data);
+    } catch (error) {
+      console.error('Error generating suggestions:', error);
+      setResult({
+        schema: { structured: false, breadcrumbs: false, faq: false, article: false },
+        readability: 0,
+        suggestions: ['Error generating suggestions. Please try again.']
+      });
+    } finally {
       setIsLoading(false);
-    }, 1800);
+    }
   };
 
   return (

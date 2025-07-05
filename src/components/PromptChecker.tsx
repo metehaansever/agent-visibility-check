@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const PromptChecker = () => {
   const [prompt, setPrompt] = useState("");
@@ -7,19 +8,23 @@ const PromptChecker = () => {
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
+    if (!prompt || !brand) return;
+    
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      const mockResults = [
-        "Your brand is not mentioned in typical AI responses.",
-        "Visibility Score: 32% - Your brand appears in 3 out of 10 AI answers.",
-        "Visibility Score: 78% - Strong presence in AI responses!",
-        "Partial visibility detected - appears in context but not prominently."
-      ];
-      setResult(mockResults[Math.floor(Math.random() * mockResults.length)]);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-prompt', {
+        body: { prompt, brand }
+      });
+
+      if (error) throw error;
+      setResult(data.analysis);
+    } catch (error) {
+      console.error('Error analyzing prompt:', error);
+      setResult('Error analyzing prompt. Please try again.');
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -58,7 +63,7 @@ const PromptChecker = () => {
       {result && (
         <div className="border-2 border-black p-4 bg-gray-50">
           <h4 className="font-bold mb-2">Analysis Result:</h4>
-          <p>{result}</p>
+          <p className="whitespace-pre-wrap">{result}</p>
         </div>
       )}
     </div>

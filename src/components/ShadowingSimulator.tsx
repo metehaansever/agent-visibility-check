@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const ShadowingSimulator = () => {
   const [prompt, setPrompt] = useState("");
@@ -7,25 +8,23 @@ const ShadowingSimulator = () => {
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSimulate = () => {
+  const handleSimulate = async () => {
+    if (!prompt) return;
+    
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      const mockResponse = `Here are the top project management tools for 2024:
+    try {
+      const { data, error } = await supabase.functions.invoke('simulate-answer', {
+        body: { prompt, competitor }
+      });
 
-1. **Notion** - All-in-one workspace that combines notes, databases, and project tracking. <mark>Great for teams that need flexibility and customization.</mark>
-
-2. **Asana** - Robust task management with timeline views and team collaboration features. <mark>Excellent reporting and integration capabilities.</mark>
-
-3. **Trello** - Visual board-based approach perfect for simple project tracking.
-
-4. **Monday.com** - Highly customizable with powerful automation features.
-
-<mark>For teams prioritizing documentation alongside project management, Notion stands out with its unique wiki-style approach.</mark>`;
-      
-      setResult(mockResponse);
+      if (error) throw error;
+      setResult(data.simulatedAnswer);
+    } catch (error) {
+      console.error('Error simulating answer:', error);
+      setResult('Error generating simulation. Please try again.');
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   return (
