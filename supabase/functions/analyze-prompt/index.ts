@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -15,7 +14,22 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, brand } = await req.json();
+    const { competitorPrompt, targetBrand } = await req.json();
+
+    const optimizeRes = await fetch("https://wrtzugagaaxcqceozcrn.supabase.co/functions/v1/optimize-prompts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: competitorPrompt,
+        brand: targetBrand,
+        iterations: 3,
+      }),
+    });
+    
+    const optimized = await optimizeRes.json();
+    const finalPrompt = optimized.finalPrompt || competitorPrompt;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -28,23 +42,20 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a brand visibility analyst. Analyze prompts for brand mention likelihood and provide structured JSON analysis. You MUST return a valid JSON object with exactly these fields:
-            - brandMentioned: boolean
-            - llmContextMatch: number (0-100, how well brand fits prompt context)
-            - mentionVisibility: number (0-100, prominence if mentioned)
-            - sourceBreakdown: object with blog, wiki, social percentages (must sum to 100)
-            - socialSignals: number (0-100, shareability score)
-            - summary: string (brief explanation)
+            content: `You are a branding strategist and competitive copywriter. Analyze competitor marketing messages and generate superior alternatives. You MUST return a valid JSON object with exactly these fields:
+            - competitorAnalysis: object with valueProposition, emotionalAppeal, conversionGoal (all strings)
+            - counterPrompt: string (your generated superior alternative for the target brand)
+            - strategySummary: string (why your prompt is more effective)
             
             Return ONLY the JSON object, no other text.`
           },
           {
             role: 'user',
-            content: `Analyze this prompt: "${prompt}" for brand visibility of "${brand}". Return only valid JSON.`
+            content: `Analyze this competitor's marketing message: "${finalPrompt}" and generate a strategically superior alternative for "${targetBrand}". Return only valid JSON.`
           }
         ],
-        max_tokens: 300,
-        temperature: 0.3,
+        max_tokens: 500,
+        temperature: 0.4,
       }),
     });
 
@@ -62,25 +73,21 @@ serve(async (req) => {
       analysis = JSON.parse(cleanContent);
       
       // Validate required fields
-      if (!analysis.hasOwnProperty('brandMentioned') || 
-          !analysis.hasOwnProperty('llmContextMatch') || 
-          !analysis.hasOwnProperty('mentionVisibility') ||
-          !analysis.hasOwnProperty('sourceBreakdown') ||
-          !analysis.hasOwnProperty('socialSignals') ||
-          !analysis.hasOwnProperty('summary')) {
+      if (!analysis.competitorAnalysis || !analysis.counterPrompt || !analysis.strategySummary) {
         throw new Error('Missing required fields in analysis');
       }
       
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
-      // Provide structured fallback that matches expected interface
+      // Provide structured fallback
       analysis = {
-        brandMentioned: false,
-        llmContextMatch: 25,
-        mentionVisibility: 15,
-        sourceBreakdown: { blog: 40, wiki: 35, social: 25 },
-        socialSignals: 30,
-        summary: "Analysis completed with limited context. Brand relevance appears moderate for this prompt type."
+        competitorAnalysis: {
+          valueProposition: "Cost-effective solution with competitive pricing",
+          emotionalAppeal: "Security and reliability focused messaging",
+          conversionGoal: "Drive immediate sign-up or trial conversion"
+        },
+        counterPrompt: `Experience the difference with ${targetBrand} - where innovation meets simplicity. Join thousands who've already made the switch to smarter, more intuitive solutions. Try ${targetBrand} free for 30 days and see why industry leaders choose us.`,
+        strategySummary: "This counter-strategy emphasizes innovation and social proof while maintaining urgency, differentiating from price-focused competitors."
       };
     }
 
@@ -88,7 +95,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in analyze-prompt function:', error);
+    console.error('Error in ad-duel-analyzer function:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

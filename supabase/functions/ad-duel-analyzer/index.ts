@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -15,7 +14,36 @@ serve(async (req) => {
   }
 
   try {
-    const { competitorPrompt, targetBrand } = await req.json();
+    const { competitorPrompt, targetBrand, iterations } = await req.json();
+
+    console.log('Calling optimize-prompt with:', {
+      prompt: competitorPrompt,
+      brand: targetBrand,
+      iterations: iterations || 3
+    });
+
+    const optimizeRes = await fetch("https://wrtzugagaaxcqceozcrn.supabase.co/functions/v1/optimize-prompts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: competitorPrompt,
+        brand: targetBrand,
+        iterations: iterations || 3,
+      }),
+    });
+
+    if (!optimizeRes.ok) {
+      console.error('Error from optimize-prompts:', optimizeRes.status, optimizeRes.statusText);
+      const errorText = await optimizeRes.text();
+      console.error('Error response:', errorText);
+      throw new Error(`Failed to optimize prompt: ${errorText}`);
+    }
+
+    const optimized = await optimizeRes.json();
+    console.log('Optimized result:', optimized);
+    const finalPrompt = optimized.finalPrompt || competitorPrompt;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -37,7 +65,7 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: `Analyze this competitor's marketing message: "${competitorPrompt}" and generate a strategically superior alternative for "${targetBrand}". Return only valid JSON.`
+            content: `Analyze this competitor's marketing message: "${finalPrompt}" and generate a strategically superior alternative for "${targetBrand}". Return only valid JSON.`
           }
         ],
         max_tokens: 500,

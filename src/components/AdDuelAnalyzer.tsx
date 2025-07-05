@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,6 +16,7 @@ interface AdDuelResult {
 const AdDuelAnalyzer = () => {
   const [competitorPrompt, setCompetitorPrompt] = useState("");
   const [targetBrand, setTargetBrand] = useState("");
+  const [iterationCount, setIterationCount] = useState(3);
   const [result, setResult] = useState<AdDuelResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -26,7 +26,7 @@ const AdDuelAnalyzer = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('ad-duel-analyzer', {
-        body: { competitorPrompt, targetBrand }
+        body: { competitorPrompt, targetBrand, iterations: iterationCount }
       });
 
       if (error) throw error;
@@ -49,7 +49,7 @@ const AdDuelAnalyzer = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-[2fr_1fr] gap-4">
         <div>
           <label className="block text-sm font-medium mb-2">Competitor's Marketing Message</label>
           <textarea
@@ -57,18 +57,33 @@ const AdDuelAnalyzer = () => {
             onChange={(e) => setCompetitorPrompt(e.target.value)}
             placeholder="e.g., 'Get 50% off our premium software - the #1 choice for businesses worldwide!'"
             className="w-full p-3 border-2 border-black focus:outline-none focus:bg-gray-50"
-            rows={3}
+            rows={5}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-2">Your Target Brand</label>
-          <input
-            type="text"
-            value={targetBrand}
-            onChange={(e) => setTargetBrand(e.target.value)}
-            placeholder="e.g., TechFlow, BrandCorp, StartupX"
-            className="w-full p-3 border-2 border-black focus:outline-none focus:bg-gray-50"
-          />
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Your Target Brand</label>
+              <input
+                type="text"
+                value={targetBrand}
+                onChange={(e) => setTargetBrand(e.target.value)}
+                placeholder="e.g., TechFlow, BrandCorp, StartupX"
+                className="w-full p-3 border-2 border-black focus:outline-none focus:bg-gray-50"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Iteration Count (1–100)</label>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={iterationCount}
+                onChange={(e) => setIterationCount(Number(e.target.value))}
+                className="w-full p-3 border-2 border-black focus:outline-none focus:bg-gray-50"
+              />
+            </div>
+          </div>
         </div>
       </div>
       
