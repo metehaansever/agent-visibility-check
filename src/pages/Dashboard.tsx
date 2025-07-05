@@ -66,15 +66,15 @@ const Dashboard = () => {
             <AdDuelAnalyzer />
           </section>
 
-          {/* Section 5: Trend Analyzer */}
+          {/* Section 5: Trend Analyzer 
           <section className="border-2 border-black p-8">
             <div className="flex items-center gap-3 mb-6">
               <TrendingUp size={24} />
               <h2 className="text-2xl font-bold">Trend Analyzer</h2>
             </div>
             <TrendAnalyzer />
-          </section>
-
+          </section> 
+          */}
         </div>
       </div>
     </div>

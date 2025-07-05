@@ -37,18 +37,20 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an SEO and content visibility expert. Analyze webpage content for AI visibility optimization. Return JSON with:
+            content: `You are an SEO and content visibility expert. Analyze webpage content for AI visibility optimization. Return ONLY a valid JSON object with exactly these fields:
             - schemaUsage: number (0-100, schema markup quality)
             - readability: number (0-100, content readability score)
             - socialSignals: number (0-100, shareability potential)
             - llmContextMatch: number (0-100, topic coherence)
             - mentionVisibility: number (0-100, brand prominence)
             - improvements: array of 2-3 specific suggestions
-            - detectedSchema: object with jsonLd, microdata, openGraph, structuredData booleans`
+            - detectedSchema: object with jsonLd, microdata, openGraph, structuredData booleans
+            
+            Return ONLY the JSON object, no other text. Make sure all values are valid numbers between 0-100 and all fields are present.`
           },
           {
             role: 'user',
-            content: `Analyze this URL and content for SEO and AI visibility: ${url}${pageContent ? `\n\nPage content: ${pageContent.substring(0, 2000)}` : ''}. Provide detailed analysis in JSON format.`
+            content: `Analyze this URL and content for SEO and AI visibility: ${url}${pageContent ? `\n\nPage content: ${pageContent.substring(0, 2000)}` : ''}. Return ONLY valid JSON. `
           }
         ],
         max_tokens: 600,
@@ -57,30 +59,28 @@ serve(async (req) => {
     });
 
     const data = await response.json();
+    console.log('OpenAI response:', data);
+    
     let analysis;
     
     try {
-      analysis = JSON.parse(data.choices[0].message.content);
-    } catch (parseError) {
-      // Fallback structured response
-      analysis = {
-        schemaUsage: 45,
-        readability: 65,
-        socialSignals: 40,
-        llmContextMatch: 55,
-        mentionVisibility: 35,
-        improvements: [
-          "Add structured data markup for better search visibility",
-          "Improve heading structure with clear H1-H3 hierarchy",
-          "Add social sharing buttons and Open Graph metadata"
-        ],
-        detectedSchema: {
-          jsonLd: false,
-          microdata: pageContent.includes('itemscope'),
-          openGraph: pageContent.includes('og:'),
-          structuredData: false
-        }
-      };
+      const content = data.choices[0].message.content.trim();
+      console.log('Raw content:', content);
+      
+      // Remove any potential markdown formatting
+      const cleanContent = content.replace(/```json\s*|\s*```/g, '').trim();
+      analysis = JSON.parse(cleanContent);
+      
+      // Validate required fields
+      const requiredFields = ['schemaUsage', 'readability', 'socialSignals', 'llmContextMatch', 'mentionVisibility', 'improvements', 'detectedSchema'];
+      const missingFields = requiredFields.filter(field => !(field in analysis));
+      
+      if (missingFields.length > 0) {
+        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+      }
+    } catch (error) {
+      console.error('Error parsing or validating analysis:', error);
+      throw new Error('Failed to parse analysis data. Please try again.');
     }
 
     return new Response(JSON.stringify({ analysis }), {
