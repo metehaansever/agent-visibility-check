@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Target, Users, Map } from "lucide-react";
 import FeatureCard from "../components/FeatureCard";
 import TrustedBy from "../components/TrustedBy";
+import image1 from '../images/image1.png';
+
 
 const Index = () => {
   return (
@@ -18,7 +20,7 @@ const Index = () => {
       
       <div className="relative">
         <img 
-          src="/src/images/image1.png" 
+          src={image1} 
           alt="AI Agents Navigation" 
           className="w-full max-w-3xl mx-auto mb-16"
         />
