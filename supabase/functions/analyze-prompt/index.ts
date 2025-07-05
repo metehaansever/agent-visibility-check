@@ -28,20 +28,40 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an AI visibility analyst. Analyze how likely a brand would be mentioned in AI responses to user prompts. Provide a visibility score (0-100%) and brief analysis.`
+            content: `You are a brand visibility analyst. Analyze prompts for brand mention likelihood and provide structured JSON analysis. Return a JSON object with:
+            - brandMentioned: boolean
+            - llmContextMatch: number (0-100, how well brand fits prompt context)
+            - mentionVisibility: number (0-100, prominence if mentioned)
+            - sourceBreakdown: object with blog, wiki, social percentages (must sum to 100)
+            - socialSignals: number (0-100, shareability score)
+            - summary: string (brief explanation)`
           },
           {
             role: 'user',
-            content: `Analyze this prompt: "${prompt}" for brand visibility of "${brand}". How likely would this brand appear in AI responses? Give a visibility score and explanation.`
+            content: `Analyze this prompt: "${prompt}" for brand visibility of "${brand}". Provide detailed scoring and analysis in JSON format.`
           }
         ],
-        max_tokens: 200,
-        temperature: 0.7,
+        max_tokens: 300,
+        temperature: 0.3,
       }),
     });
 
     const data = await response.json();
-    const analysis = data.choices[0].message.content;
+    let analysis;
+    
+    try {
+      analysis = JSON.parse(data.choices[0].message.content);
+    } catch (parseError) {
+      // Fallback structured response
+      analysis = {
+        brandMentioned: false,
+        llmContextMatch: 25,
+        mentionVisibility: 15,
+        sourceBreakdown: { blog: 40, wiki: 35, social: 25 },
+        socialSignals: 30,
+        summary: "Unable to parse detailed analysis. Brand context appears limited for this prompt type."
+      };
+    }
 
     return new Response(JSON.stringify({ analysis }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

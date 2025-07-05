@@ -17,6 +17,15 @@ serve(async (req) => {
   try {
     const { url } = await req.json();
 
+    // Fetch the webpage content
+    let pageContent = '';
+    try {
+      const pageResponse = await fetch(url);
+      pageContent = await pageResponse.text();
+    } catch (fetchError) {
+      console.log('Could not fetch page content, using URL analysis only');
+    }
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -28,15 +37,22 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a content optimization expert. Analyze website URLs and provide structured feedback for improving AI visibility. Return a JSON object with: schema (object with structured, breadcrumbs, faq, article booleans), readability (score 0-100), and suggestions (array of specific improvement recommendations).`
+            content: `You are an SEO and content visibility expert. Analyze webpage content for AI visibility optimization. Return JSON with:
+            - schemaUsage: number (0-100, schema markup quality)
+            - readability: number (0-100, content readability score)
+            - socialSignals: number (0-100, shareability potential)
+            - llmContextMatch: number (0-100, topic coherence)
+            - mentionVisibility: number (0-100, brand prominence)
+            - improvements: array of 2-3 specific suggestions
+            - detectedSchema: object with jsonLd, microdata, openGraph, structuredData booleans`
           },
           {
             role: 'user',
-            content: `Analyze this URL for AI visibility optimization: ${url}. Provide suggestions for improving content structure, schema markup, and readability to increase chances of being referenced by AI systems.`
+            content: `Analyze this URL and content for SEO and AI visibility: ${url}${pageContent ? `\n\nPage content: ${pageContent.substring(0, 2000)}` : ''}. Provide detailed analysis in JSON format.`
           }
         ],
-        max_tokens: 400,
-        temperature: 0.7,
+        max_tokens: 600,
+        temperature: 0.3,
       }),
     });
 
@@ -46,20 +62,28 @@ serve(async (req) => {
     try {
       analysis = JSON.parse(data.choices[0].message.content);
     } catch (parseError) {
-      // Fallback if AI doesn't return valid JSON
+      // Fallback structured response
       analysis = {
-        schema: {
-          structured: Math.random() > 0.5,
-          breadcrumbs: Math.random() > 0.6,
-          faq: Math.random() > 0.4,
-          article: Math.random() > 0.3
-        },
-        readability: Math.floor(Math.random() * 40) + 60,
-        suggestions: data.choices[0].message.content.split('\n').filter(line => line.trim().length > 0).slice(0, 5)
+        schemaUsage: 45,
+        readability: 65,
+        socialSignals: 40,
+        llmContextMatch: 55,
+        mentionVisibility: 35,
+        improvements: [
+          "Add structured data markup for better search visibility",
+          "Improve heading structure with clear H1-H3 hierarchy",
+          "Add social sharing buttons and Open Graph metadata"
+        ],
+        detectedSchema: {
+          jsonLd: false,
+          microdata: pageContent.includes('itemscope'),
+          openGraph: pageContent.includes('og:'),
+          structuredData: false
+        }
       };
     }
 
-    return new Response(JSON.stringify(analysis), {
+    return new Response(JSON.stringify({ analysis }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

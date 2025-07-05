@@ -2,10 +2,26 @@
 import { useState } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import RadarChart from "./RadarChart";
+
+interface ContentAnalysis {
+  schemaUsage: number;
+  readability: number;
+  socialSignals: number;
+  llmContextMatch: number;
+  mentionVisibility: number;
+  improvements: string[];
+  detectedSchema: {
+    jsonLd: boolean;
+    microdata: boolean;
+    openGraph: boolean;
+    structuredData: boolean;
+  };
+}
 
 const ContentMapper = () => {
   const [url, setUrl] = useState("");
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<ContentAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleAnalyze = async () => {
@@ -18,14 +34,10 @@ const ContentMapper = () => {
       });
 
       if (error) throw error;
-      setResult(data);
+      setResult(data.analysis);
     } catch (error) {
       console.error('Error generating suggestions:', error);
-      setResult({
-        schema: { structured: false, breadcrumbs: false, faq: false, article: false },
-        readability: 0,
-        suggestions: ['Error generating suggestions. Please try again.']
-      });
+      setResult(null);
     } finally {
       setIsLoading(false);
     }
@@ -49,66 +61,94 @@ const ContentMapper = () => {
         disabled={!url || isLoading}
         className="bg-black text-white px-6 py-3 border-2 border-black hover:bg-white hover:text-black transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isLoading ? "Analyzing..." : "Generate Suggestions"}
+        {isLoading ? "Analyzing..." : "Analyze SEO & Visibility"}
       </button>
 
       {result && (
         <div className="space-y-6">
-          {/* Schema Detection */}
-          <div className="border-2 border-black p-4">
-            <h4 className="font-bold mb-3">Detected Schema</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                {result.schema.structured ? 
-                  <CheckCircle className="text-green-600" size={16} /> : 
-                  <XCircle className="text-red-600" size={16} />
-                }
-                <span>Structured Data</span>
+          <div className="border-2 border-black p-4 bg-gray-50">
+            <h4 className="text-sm font-semibold mb-4">SEO & Visibility Analyzer</h4>
+            
+            <RadarChart
+              data={{
+                schemaUsage: result.schemaUsage,
+                readability: result.readability,
+                socialSignals: result.socialSignals,
+                llmContextMatch: result.llmContextMatch,
+                mentionVisibility: result.mentionVisibility
+              }}
+              title="Content Analysis"
+            />
+
+            <div className="mt-6 space-y-4">
+              {/* Schema Detection */}
+              <div>
+                <h5 className="text-sm font-semibold mb-3">Detected Schema Types</h5>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2">
+                    {result.detectedSchema.jsonLd ? 
+                      <CheckCircle className="text-green-600" size={16} /> : 
+                      <XCircle className="text-red-600" size={16} />
+                    }
+                    <span className="text-sm">JSON-LD</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {result.detectedSchema.microdata ? 
+                      <CheckCircle className="text-green-600" size={16} /> : 
+                      <XCircle className="text-red-600" size={16} />
+                    }
+                    <span className="text-sm">Microdata</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {result.detectedSchema.openGraph ? 
+                      <CheckCircle className="text-green-600" size={16} /> : 
+                      <XCircle className="text-red-600" size={16} />
+                    }
+                    <span className="text-sm">Open Graph</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {result.detectedSchema.structuredData ? 
+                      <CheckCircle className="text-green-600" size={16} /> : 
+                      <XCircle className="text-red-600" size={16} />
+                    }
+                    <span className="text-sm">Structured Data</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {result.schema.breadcrumbs ? 
-                  <CheckCircle className="text-green-600" size={16} /> : 
-                  <XCircle className="text-red-600" size={16} />
-                }
-                <span>Breadcrumbs</span>
+
+              {/* Metrics */}
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium">Readability Score:</span>
+                  <span className="ml-2">{result.readability}%</span>
+                </div>
+                <div>
+                  <span className="font-medium">Social Shareability:</span>
+                  <span className="ml-2">{result.socialSignals}%</span>
+                </div>
+                <div>
+                  <span className="font-medium">Context Match:</span>
+                  <span className="ml-2">{result.llmContextMatch}%</span>
+                </div>
+                <div>
+                  <span className="font-medium">Brand Visibility:</span>
+                  <span className="ml-2">{result.mentionVisibility}%</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {result.schema.faq ? 
-                  <CheckCircle className="text-green-600" size={16} /> : 
-                  <XCircle className="text-red-600" size={16} />
-                }
-                <span>FAQ Schema</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {result.schema.article ? 
-                  <CheckCircle className="text-green-600" size={16} /> : 
-                  <XCircle className="text-red-600" size={16} />
-                }
-                <span>Article Schema</span>
+
+              {/* Improvement Suggestions */}
+              <div>
+                <h5 className="text-sm font-semibold mb-3">Content Improvement Suggestions</h5>
+                <ul className="space-y-2">
+                  {result.improvements.map((suggestion: string, index: number) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="text-black font-bold mt-1">•</span>
+                      <span className="text-sm">{suggestion}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
-          </div>
-
-          {/* Readability Score */}
-          <div className="border-2 border-black p-4">
-            <h4 className="font-bold mb-2">Readability Score</h4>
-            <div className="text-3xl font-bold">{result.readability}%</div>
-            <div className="text-sm text-gray-600 mt-1">
-              {result.readability >= 70 ? "Good readability" : "Needs improvement"}
-            </div>
-          </div>
-
-          {/* Suggestions */}
-          <div className="border-2 border-black p-4">
-            <h4 className="font-bold mb-3">Content Improvement Suggestions</h4>
-            <ul className="space-y-2">
-              {result.suggestions.map((suggestion: string, index: number) => (
-                <li key={index} className="flex items-start gap-2">
-                  <span className="text-black font-bold mt-1">•</span>
-                  <span>{suggestion}</span>
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
       )}
