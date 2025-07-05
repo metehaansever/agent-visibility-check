@@ -1,40 +1,41 @@
-
 import { Link } from "react-router-dom";
 import { ArrowRight, Target, Users, Map } from "lucide-react";
-import HeroIllustration from "../components/HeroIllustration";
 import FeatureCard from "../components/FeatureCard";
 import TrustedBy from "../components/TrustedBy";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-white text-black font-inter">
-      {/* Hero Section */}
-      <section className="container mx-auto px-6 py-20 text-center">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-6xl font-bold mb-6 leading-tight">
-            AI Agents That Navigate the Web
-          </h1>
-          <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
-            Test your visibility in LLM answers. Simulate. Improve.
-          </p>
-          
-          <div className="flex gap-4 justify-center mb-16">
-            <Link 
-              to="/dashboard"
-              className="bg-black text-white px-8 py-4 border-2 border-black hover:bg-white hover:text-black transition-all duration-200 font-medium"
-            >
-              Try the Demo <ArrowRight className="inline ml-2" size={16} />
-            </Link>
-            <button className="bg-white text-black px-8 py-4 border-2 border-black hover:bg-black hover:text-white transition-all duration-200 font-medium">
-              Learn More
-            </button>
-          </div>
-
-          <div className="max-w-3xl mx-auto">
-            <HeroIllustration />
-          </div>
+  {/* Hero Section */}
+  <section className="container mx-auto px-6 py-20 text-center">
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-6xl font-bold mb-6 leading-tight">
+        Shadowing Agents
+      </h1>
+      <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
+        Test your visibility in LLM answers. Simulate. Improve.
+      </p>
+      
+      <div className="relative">
+        <img 
+          src="/src/images/image1.png" 
+          alt="AI Agents Navigation" 
+          className="w-full max-w-3xl mx-auto mb-16"
+        />
+        <div className="absolute bottom-0 left-0 right-0 flex gap-4 justify-center p-8">
+          <Link 
+            to="/dashboard"
+            className="bg-black text-white px-8 py-4 border-2 border-black hover:bg-white hover:text-black transition-all duration-200 font-medium"
+          >
+            Try the Demo <ArrowRight className="inline ml-2" size={16} />
+          </Link>
+          <button className="bg-white text-black px-8 py-4 border-2 border-black hover:bg-black hover:text-white transition-all duration-200 font-medium">
+            Learn More
+          </button>
         </div>
-      </section>
+      </div>
+    </div>
+  </section>
 
       {/* Features Section */}
       <section className="border-t-2 border-black py-20">

@@ -1,11 +1,11 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Search, Zap, FileText, Target } from "lucide-react";
+import { ArrowLeft, Search, Zap, FileText, Target, TrendingUp } from "lucide-react";
 import PromptChecker from "../components/PromptChecker";
 import ShadowingSimulator from "../components/ShadowingSimulator";
 import ContentMapper from "../components/ContentMapper";
 import AdDuelAnalyzer from "../components/AdDuelAnalyzer";
+import TrendAnalyzer from "../components/TrendAnalyzer";
 
 const Dashboard = () => {
   return (
@@ -64,6 +64,15 @@ const Dashboard = () => {
               <h2 className="text-2xl font-bold">Ad Duel Analyzer</h2>
             </div>
             <AdDuelAnalyzer />
+          </section>
+
+          {/* Section 5: Trend Analyzer */}
+          <section className="border-2 border-black p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <TrendingUp size={24} />
+              <h2 className="text-2xl font-bold">Trend Analyzer</h2>
+            </div>
+            <TrendAnalyzer />
           </section>
 
         </div>
